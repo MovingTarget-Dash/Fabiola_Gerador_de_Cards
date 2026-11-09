@@ -63,6 +63,7 @@ canvas.pv{width:100%;height:auto;display:block;border-radius:10px;box-shadow:0 6
 .seg button b{display:block;font-size:15px}.seg button small{display:block;font-size:12px;color:var(--mut);font-weight:400}
 .seg button.on{background:linear-gradient(100deg,#8A6A30,#E0C77C 50%,#8A6A30);color:#1b1b1e;border-color:transparent}.seg button.on small{color:#3a2d12}
 .list{display:grid;gap:8px;margin-top:14px}
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:16px 0}@media(max-width:760px){.sgrid{grid-template-columns:repeat(2,1fr)}}
 .it{display:grid;grid-template-columns:34px 54px minmax(90px,.8fr) minmax(160px,1.6fr) auto;gap:10px;align-items:center;background:#101012;border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px}
 @media(max-width:700px){.it{grid-template-columns:30px 54px 1fr auto}.it .hl{grid-column:1/-1}}
 .it img{width:54px;height:40px;object-fit:cover;border-radius:6px}
@@ -85,7 +86,7 @@ code{color:var(--gold)}
 <body>
 <header>
   <img src="{{MARCA}}" alt="Fabíola Rocha">
-  <div><h1>Gerador de Cards</h1><p>Instagram 4x5 (1080×1350) · Fabíola Rocha, corretora de imóveis · Elleva Imóveis</p></div>
+  <div><h1>Gerador de Cards</h1><p>Instagram 4x5 (1080×1350) · Stories 9x16 (1080×1920) · Fabíola Rocha, corretora de imóveis · Elleva Imóveis</p></div>
 </header>
 <main>
 
@@ -152,6 +153,31 @@ code{color:var(--gold)}
   <label class="chk"><input type="checkbox" id="other"> Incluir também a outra capa (A e B)</label>
   <div class="row" style="margin-top:12px"><button class="primary" id="zip">⬇ Baixar todos os cards (ZIP)</button><span class="status" id="m6"></span></div>
   <div class="dl" id="dl6"></div>
+</section>
+
+<div class="flow"><h2>Fluxo 3</h2><span>Stories 9x16 · opcional</span></div>
+
+<section class="step locked" id="s7">
+  <div class="sh"><div class="num">7</div><h3>Stories 9x16 (1080×1920)</h3><span class="badge">Pendente</span></div>
+  <p class="hint">Cada story usa <b>3 fotos</b> (as mesmas dos cards 4x5, na mesma ordem), com a Fabíola. Se sobrar foto, o último story é completado com a 1ª e/ou a 2ª foto. Escolha o modelo; o destaque de cada story vem da foto do meio e pode ser editado.</p>
+  <div class="seg" id="seg7" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+    <button class="on" data-m="1"><b>Modelo 1</b><small>painel central ondulado</small></button>
+    <button data-m="2"><b>Modelo 2</b><small>base com texto à esquerda</small></button>
+    <button data-m="3"><b>Modelo 3</b><small>título sobre a foto, selos de números</small></button>
+  </div>
+  <div class="row" style="margin-top:12px"><button class="primary" id="b7">Gerar stories</button><span class="status" id="m7"></span></div>
+  <div class="sgrid" id="grid7"></div>
+  <div id="ctl7" hidden>
+    <div class="row"><button class="ok" id="v7">✔ Validar stories</button><button class="warn" id="e7">✎ Relatar erro</button></div>
+    <div class="report" id="r7"><label>Descreva o erro (cite o número do story)<textarea id="t7" rows="3"></textarea></label><div class="row"><button class="primary" id="s_r7">Enviar relato</button></div></div>
+  </div>
+</section>
+
+<section class="step locked" id="s8">
+  <div class="sh"><div class="num">8</div><h3>Download dos stories</h3><span class="badge">Pendente</span></div>
+  <p class="hint">PNG 1080×1920 px: <code>Story-NN_CÓDIGO.png</code>.</p>
+  <div class="row" style="margin-top:0"><button class="primary" id="zip8">⬇ Baixar todos os stories (ZIP)</button><span class="status" id="m8"></span></div>
+  <div class="dl" id="dl8"></div>
 </section>
 
 <section class="reports" id="reports" hidden>
@@ -271,7 +297,7 @@ const readImg=f=>new Promise((res,rej)=>{const u=URL.createObjectURL(f);const i=
 const natural=(a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'});
 
 /* ---------- etapas / validação ---------- */
-const order=['s1','s2','s3','s4','s5','s6'];
+const order=['s1','s2','s3','s4','s5','s6','s7','s8'];
 function setBadge(id,txt){document.querySelector('#'+id+' .badge').textContent=txt}
 function unlock(id){$(id).classList.remove('locked')}
 function mark(id,txt){$(id).classList.add('done');setBadge(id,txt||'Validado ✓')}
@@ -360,7 +386,7 @@ function drawPage(){
   $('grid5').innerHTML='';
   S.canv.slice(page*6,page*6+6).forEach((c,k)=>{const n=page*6+k+1;const d=document.createElement('div');d.className='pc';d.innerHTML=`<small>${fname(n)}</small>`;const cv=document.createElement('canvas');cv.className='pv';cv.width=1080;cv.height=1350;cv.getContext('2d').drawImage(c,0,0);d.appendChild(cv);$('grid5').appendChild(d)});
 }
-$('v5').onclick=()=>{S.valid.s5=1;mark('s5');unlock('s6');$('r5').classList.remove('open');buildDownload()};
+$('v5').onclick=()=>{S.valid.s5=1;mark('s5');unlock('s6');unlock('s7');$('r5').classList.remove('open');buildDownload()};
 $('e5').onclick=()=>$('r5').classList.toggle('open');
 $('s_r5').onclick=()=>{const t=$('t5').value.trim();if(!t)return;relato(5,t);$('t5').value='';$('r5').classList.remove('open');setBadge('s5','Erro relatado')};
 /* Etapa 6 */
@@ -376,6 +402,109 @@ $('zip').onclick=async()=>{
   for(let i=0;i<S.canv.length;i++)z.file(fname(i+1),await blobOf(S.canv[i]));
   if($('other').checked){const om=S.model==='A'?'B':'A',keep=S.model;S.model=om;const oc=await render(S.cover,S.data.dest,true);z.file(`Capa-${om}_${S.data.codRaw}.png`,await blobOf(oc));S.model=keep}
   const b=await z.generateAsync({type:'blob'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='Cards_Fabiola_'+S.data.codRaw+'.zip';a.click();$('m6').textContent='Download iniciado ✓';mark('s6','Baixado ✓');
+};
+
+/* ---------- Fluxo 3: stories 9x16 (3 modelos) ---------- */
+function fabS(x,h,bottom,right){const ah=h*593/570,aw=IMG.aura.width/IMG.aura.height*ah,fw=IMG.fab.width/IMG.fab.height*h;x.drawImage(IMG.aura,1080-right-aw,bottom-ah,aw,ah);x.drawImage(IMG.fab,1080-right-fw,bottom-h,fw,h)}
+function stCanvas(){const c=document.createElement('canvas');c.width=1080;c.height=1920;return c}
+function pill(x,txt,px,py,fs){x.font='600 '+fs+'px Montserrat';setLS(x,(fs*.2)+'px');const tw=x.measureText(txt).width,lh=lineH(x),pw=tw+60,ph=lh+22;
+ const g=x.createLinearGradient(0,py+ph,0,py);g.addColorStop(0,'rgba(27,27,30,.92)');g.addColorStop(.5,'rgba(27,27,30,.92)');g.addColorStop(1,'rgba(112,112,120,.92)');x.fillStyle=g;x.beginPath();x.roundRect(px,py,pw,ph,ph/2);x.fill();T(x,txt,px+30+fs*.1,py+11,null,'#fff');return{pw,ph}}
+function gline(x,y){x.fillStyle=goldH(x,0,1080);x.fillRect(0,y-2,1080,4)}
+function panelFill(x,path,y0,y1){const g=x.createLinearGradient(0,y1,0,y0);g.addColorStop(0,'#1b1b1e');g.addColorStop(.55,'#1b1b1e');g.addColorStop(1,'#707078');x.fillStyle=g;x.fill(path)}
+function stCod(x,txt,left,top){x.font='400 26px Montserrat';setLS(x,'3px');T(x,'Cód. '+txt,left,top,null,'#DDE5C8')}
+function topFade(x,h){const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba(10,16,2,.85)');g.addColorStop(1,'rgba(10,16,2,0)');x.fillStyle=g;x.fillRect(0,0,1080,h)}
+function tipoCod(x,d,cy){x.font='600 24px Montserrat';setLS(x,'4.8px');const w1=x.measureText(d.tipoU).width+60,w2=x.measureText('CÓD. '+d.cod).width+60,ph=lineH(x)+22,x0=(1080-(w1+14+w2))/2;pill(x,d.tipoU,x0,cy-ph/2,24);pill(x,'CÓD. '+d.cod,x0+w1+14,cy-ph/2,24)}
+const numParts=d=>line4(d).split('  ·  ').filter(Boolean);
+
+function story1(d,photos,hl){const c=stCanvas(),x=c.getContext('2d');x.fillStyle='#1b1b1e';x.fillRect(0,0,1080,1920);
+ photos.forEach((p,i)=>cover(x,p,0,i*640,1080,640));gline(x,640);gline(x,1280);
+ x.save();x.translate(880,1190);x.scale(1,.5);let rg=x.createRadialGradient(0,0,0,0,0,380);rg.addColorStop(0,'rgba(10,14,4,.88)');rg.addColorStop(.6,'rgba(10,14,4,.6)');rg.addColorStop(1,'rgba(10,14,4,0)');x.fillStyle=rg;x.fillRect(-400,-400,800,800);x.restore();
+ shadowLogo(x,IMG.marca,880-125,1190-63,250);
+ fabS(x,640,1920,0);
+ const t=470,h=312,w=`C 260 ${t+70} 520 ${t+60} 700 ${t+25} C 860 ${t-5} 980 ${t-10} 1080 ${t}`;
+ x.save();x.globalAlpha=.94;panelFill(x,new Path2D(`M0 ${t+40} ${w} L1080 ${t+h} L0 ${t+h} Z`),t-10,t+h);x.restore();
+ x.strokeStyle=goldH(x,0,1080);x.lineWidth=7;x.stroke(new Path2D(`M0 ${t+40} ${w}`));
+ pill(x,d.tipoU,64,t-70,24);x.font='400 28px Montserrat';setLS(x,'3px');x.textAlign='right';x.fillStyle='#DDE5C8';x.fillText('Cód. '+d.cod,1019,baseOf(x,t+22,null));x.textAlign='left';
+ fitText(x,d.nome,"italic 500 {s}px 'Cormorant Garamond'",80,900,0);T(x,d.nome,64,t+80,84,'#fff');
+ if(hl){fitText(x,hl,'400 {s}px Montserrat',34,900,.03);T(x,hl,64,t+185,null,'#fff')}
+ const l4=line4(d);if(l4){fitText(x,l4,'500 {s}px Montserrat',34,900,.06);T(x,l4,64,t+245,null,'#E8D49A')}
+ return c}
+
+function story2(d,photos,hl){const c=stCanvas(),x=c.getContext('2d');x.fillStyle='#1b1b1e';x.fillRect(0,0,1080,1920);
+ photos.forEach((p,i)=>cover(x,p,0,i*470,1080,470));gline(x,470);gline(x,940);
+ topFade(x,300);shadowLogo(x,IMG.marca,1080-60-250,60,250);
+ const t=1330,w=`C 260 ${t+32} 520 ${t+22} 700 ${t-18} C 860 ${t-53} 980 ${t-60} 1080 ${t-52}`;
+ panelFill(x,new Path2D(`M0 ${t} ${w} L1080 1920 L0 1920 Z`),t-60,1920);
+ x.strokeStyle=goldH(x,0,1080);x.lineWidth=8;x.stroke(new Path2D(`M0 ${t} ${w}`));
+ x.font='600 24px Montserrat';setLS(x,'4.8px');{const pw=x.measureText(d.tipoU).width+60,ph=lineH(x)+22;pill(x,d.tipoU,(1080-pw)/2,470-ph/2,24)}
+ fabS(x,780,1920,0);
+ fitText(x,d.nome,"italic 500 {s}px 'Cormorant Garamond'",84,620,0);T(x,d.nome,72,t+70,90,'#fff');
+ if(hl){fitText(x,hl,'400 {s}px Montserrat',32,600,.03);T(x,hl,72,t+185,null,'#fff')}
+ x.font='500 32px Montserrat';setLS(x,'1.9px');numParts(d).forEach((s,i)=>T(x,s,72,t+250+i*52,null,'#E8D49A'));
+ stCod(x,d.cod,72,1830);
+ return c}
+
+function story3(d,photos,hl){const c=stCanvas(),x=c.getContext('2d');x.fillStyle='#1b1b1e';x.fillRect(0,0,1080,1920);
+ photos.forEach((p,i)=>cover(x,p,0,i*640,1080,640));gline(x,640);gline(x,1280);
+ let g=x.createLinearGradient(0,0,0,300);g.addColorStop(0,'rgba(10,16,2,.88)');g.addColorStop(1,'rgba(10,16,2,0)');x.fillStyle=g;x.fillRect(0,0,1080,300);
+ g=x.createLinearGradient(0,640,0,930);g.addColorStop(0,'rgba(10,16,2,.9)');g.addColorStop(.6,'rgba(10,16,2,.78)');g.addColorStop(1,'rgba(10,16,2,0)');x.fillStyle=g;x.fillRect(0,640,1080,290);
+ shadowLogo(x,IMG.marca,540-110,56,220);
+ fitText(x,d.nome,"italic 500 {s}px 'Cormorant Garamond'",86,980,0);x.textAlign='center';x.fillStyle='#fff';x.fillText(d.nome,540,baseOf(x,684,92));
+ if(hl){x.fillStyle=goldH(x,380,700);x.fillRect(380,782,320,3);
+  fitText(x,hl,'400 {s}px Montserrat',30,980,.03);x.textAlign='center';x.fillStyle='#fff';x.save();x.shadowColor='rgba(0,0,0,.85)';x.shadowBlur=10;x.fillText(hl,540,baseOf(x,796,null));x.restore()}
+ x.textAlign='left';
+ g=x.createLinearGradient(0,1690,0,1920);g.addColorStop(0,'rgba(27,27,30,0)');g.addColorStop(.45,'rgba(27,27,30,.9)');g.addColorStop(1,'#1b1b1e');x.fillStyle=g;x.fillRect(0,1690,1080,230);
+ x.save();x.translate(150,1800);x.scale(1,.6);g=x.createRadialGradient(0,0,0,0,0,500);g.addColorStop(0,'rgba(12,12,14,.6)');g.addColorStop(1,'rgba(12,12,14,0)');x.fillStyle=g;x.fillRect(-700,-700,1400,1400);x.restore();
+ fabS(x,700,1920,30);
+ const items=numParts(d);let y=1580+(4-items.length)*76;
+ x.font='600 30px Montserrat';setLS(x,'1px');
+ items.forEach(s=>{const w=x.measureText(s).width+56,h=64;x.fillStyle='rgba(27,27,30,.88)';x.beginPath();x.roundRect(56,y,w,h,32);x.fill();x.strokeStyle=goldH(x,56,56+w);x.lineWidth=2.5;x.stroke();T(x,s,84,y+(h-lineH(x))/2,null,'#E8D49A');y+=76});
+ tipoCod(x,d,640);
+ return c}
+const STORY_FN={1:story1,2:story2,3:story3};
+
+let STORIES=[],stModel='1',stGroups=[],stHl=[];
+function storyGroups(){
+  const n=1+S.more.length,idx=Array.from({length:n},(_,i)=>i),groups=[];
+  for(let i=0;i<n;i+=3)groups.push(idx.slice(i,i+3));
+  const last=groups[groups.length-1];
+  if(last.length<3){const fill=[0,1];let k=0;while(last.length<3)last.push(fill[k++%2])}
+  return groups;
+}
+const allImgs=()=>[S.cover,...S.more.map(m=>m.img)];
+const allHls=()=>[S.data.dest,...S.more.map(m=>hlText(m.hl))];
+const sname=n=>'Story-'+String(n).padStart(2,'0')+'_'+S.data.codRaw+'.png';
+async function drawStories(){
+  await fonts();const d={...S.data,tipoU:S.data.tipo.toUpperCase()},imgs=allImgs();
+  STORIES=stGroups.map((g,i)=>STORY_FN[stModel](d,g.map(k=>imgs[k]),hlText(stHl[i])));
+  $('grid7').innerHTML='';
+  STORIES.forEach((c,i)=>{const w=document.createElement('div');w.className='pc';w.innerHTML='<small>'+sname(i+1)+'</small>';const cv=document.createElement('canvas');cv.className='pv';cv.width=1080;cv.height=1920;cv.getContext('2d').drawImage(c,0,0);w.appendChild(cv);
+   const inp=document.createElement('input');inp.value=stHl[i];inp.placeholder='Destaque do story';inp.style.marginTop='6px';inp.style.fontSize='13px';inp.dataset.i=i;w.appendChild(inp);$('grid7').appendChild(w)});
+}
+function reset7(){$('s7').classList.remove('done');setBadge('s7','Pendente');reset('s8')}
+let stTimer;
+$('grid7').oninput=e=>{const i=e.target.dataset.i;if(i===undefined)return;stHl[+i]=e.target.value;clearTimeout(stTimer);const id=+i;stTimer=setTimeout(async()=>{const pos=e.target.selectionStart;await drawStories();const ni=$('grid7').querySelector('input[data-i="'+id+'"]');if(ni){ni.focus();ni.setSelectionRange(pos,pos)}reset7()},600)};
+$('seg7').onclick=async e=>{const b=e.target.closest('button');if(!b)return;stModel=b.dataset.m;[...$('seg7').children].forEach(k=>k.classList.toggle('on',k===b));if(STORIES.length){await drawStories();reset7()}};
+$('b7').onclick=async()=>{
+  stGroups=storyGroups();const hl=allHls();stHl=stGroups.map(g=>hl[g[1]]);
+  await drawStories();
+  const tot=1+S.more.length,fill=stGroups.length*3-tot;
+  $('m7').innerHTML='<b>'+stGroups.length+' stories gerados ✓</b> ('+tot+' fotos'+(fill?', '+fill+' repetida(s) para completar o último':'')+')';
+  $('ctl7').hidden=false;
+};
+$('v7').onclick=()=>{mark('s7');unlock('s8');$('r7').classList.remove('open');buildDl8()};
+$('e7').onclick=()=>$('r7').classList.toggle('open');
+$('s_r7').onclick=()=>{const t=$('t7').value.trim();if(!t)return;relato(7,t);$('t7').value='';$('r7').classList.remove('open');setBadge('s7','Erro relatado')};
+function buildDl8(){
+  $('dl8').innerHTML='';
+  STORIES.forEach((c,i)=>{const a=document.createElement('a');a.download=sname(i+1);a.href=c.toDataURL('image/png');const im=document.createElement('img');im.src=a.href;a.appendChild(im);a.appendChild(document.createTextNode(sname(i+1)));$('dl8').appendChild(a)});
+  $('m8').textContent=STORIES.length+' stories prontos';setBadge('s8','Pronto');
+}
+$('zip8').onclick=async()=>{
+  if(!window.JSZip){$('m8').textContent='Biblioteca ZIP não carregou (sem internet?). Use os downloads individuais.';return}
+  $('m8').textContent='Gerando ZIP...';const z=new JSZip();
+  for(let i=0;i<STORIES.length;i++)z.file(sname(i+1),await blobOf(STORIES[i]));
+  const b=await z.generateAsync({type:'blob'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='Stories_Fabiola_'+S.data.codRaw+'.zip';a.click();$('m8').textContent='Download iniciado ✓';mark('s8','Baixado ✓');
 };
 </script>
 </body>
