@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Fabíola Rocha · Gerador de Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#121214;--card:#1b1b1e;--ink:#f1ece0;--mut:#a6a39a;--line:#34342f;--gold:#E0C77C;--gold2:#8A6A30;--green:#4B6701;--ok:#8fb31a;--err:#ff7a6e}
+*{box-sizing:border-box}
+html{color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Montserrat,system-ui,sans-serif}
+header{background:linear-gradient(180deg,#232326,#161618);padding:18px 24px;display:flex;align-items:center;gap:22px;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,#8A6A30,#E0C77C,#8A6A30) 1}
+header img{height:64px;width:auto}
+header h1{margin:0;font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(26px,5vw,40px);line-height:1.05}
+header p{margin:3px 0 0;color:var(--mut);font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 80px}
+.flow{margin:34px 0 14px;display:flex;align-items:center;gap:12px}
+.flow h2{margin:0;font-size:19px;font-weight:600;color:var(--gold)}
+.flow span{font-size:13px;color:var(--mut)}
+.flow:after{content:"";flex:1;height:2px;background:linear-gradient(90deg,var(--gold2),transparent)}
+.step{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:16px;box-shadow:0 2px 14px rgba(0,0,0,.4)}
+.step.locked{opacity:.4;pointer-events:none;filter:grayscale(.6)}
+.step.done{border-color:rgba(143,179,26,.55)}
+.sh{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.num{width:34px;height:34px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:600;font-size:14px;flex:none}
+.done .num{background:var(--ok);color:#1b1b1e}
+.sh h3{margin:0;font-size:17px;font-weight:600}
+.badge{margin-left:auto;font-size:12px;padding:4px 12px;border-radius:20px;background:#2a2a2d;color:var(--mut);white-space:nowrap}
+.done .badge{background:rgba(143,179,26,.2);color:var(--ok)}
+.hint{color:var(--mut);font-size:14px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+label{display:block;font-size:13px;font-weight:500;color:var(--mut)}
+.grid>label,.report label{font-size:10.4px;font-weight:600;color:var(--gold);letter-spacing:.2px}
+input,select,textarea{width:100%;margin-top:5px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:15px;color:var(--ink);background:#101012}
+input::placeholder,textarea::placeholder{color:#6b6a63}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);border-color:transparent}
+button{font:inherit;font-weight:600;font-size:15px;border:0;border-radius:40px;padding:12px 26px;cursor:pointer}
+.primary{background:linear-gradient(100deg,#8A6A30,#E0C77C 50%,#8A6A30);color:#1b1b1e;box-shadow:0 6px 16px rgba(138,106,48,.35)}
+.ok{background:var(--green);color:#fff}
+.ghost{background:transparent;color:var(--ink);border:1.5px solid #6d6a5c}
+.warn{background:transparent;color:var(--err);border:1.5px solid var(--err)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.drop{border:2px dashed #5a5848;border-radius:14px;padding:26px;text-align:center;background:#101012;color:var(--mut);cursor:pointer}
+.drop strong{color:var(--gold)}
+.status{margin-top:12px;font-size:14px;font-weight:500}
+.status b{color:var(--ok)}
+.cover{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:22px;align-items:start}
+@media(max-width:760px){.cover{grid-template-columns:1fr}}
+canvas.pv{width:100%;height:auto;display:block;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.5);background:#000}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:640px){.pgrid{grid-template-columns:repeat(2,1fr)}}
+.pc small{display:block;font-size:12px;color:var(--mut);margin-bottom:4px}
+.tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.tab{padding:8px 18px;border-radius:30px;background:#2a2a2d;color:var(--ink);font-size:14px}
+.tab.on{background:var(--gold);color:#1b1b1e}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.seg button{border-radius:14px;border:1.5px solid var(--line);background:#101012;color:var(--ink);padding:12px 14px;text-align:left;font-weight:500;line-height:1.3}
+.seg button b{display:block;font-size:15px}.seg button small{display:block;font-size:12px;color:var(--mut);font-weight:400}
+.seg button.on{background:linear-gradient(100deg,#8A6A30,#E0C77C 50%,#8A6A30);color:#1b1b1e;border-color:transparent}.seg button.on small{color:#3a2d12}
+.list{display:grid;gap:8px;margin-top:14px}
+.it{display:grid;grid-template-columns:34px 54px minmax(90px,.8fr) minmax(160px,1.6fr) auto;gap:10px;align-items:center;background:#101012;border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px}
+@media(max-width:700px){.it{grid-template-columns:30px 54px 1fr auto}.it .hl{grid-column:1/-1}}
+.it img{width:54px;height:40px;object-fit:cover;border-radius:6px}
+.it .n{font-weight:600;color:var(--gold)}
+.it .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mut)}
+.it .hl{margin:0;padding:8px 10px;font-size:13px}
+.it .bt{display:flex;gap:4px}
+.it button{padding:4px 10px;font-size:14px;background:#2a2a2d;color:var(--ink);border-radius:8px}
+.report{margin-top:14px;padding:14px;border:1px solid rgba(255,122,110,.45);border-radius:12px;background:#2a1416;display:none}
+.report.open{display:block}
+.reports{margin-top:30px}.reports li{font-size:14px;margin-bottom:6px}
+.dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:16px}
+.dl a{color:var(--ink);font-size:12px;text-decoration:none;text-align:center}
+.dl img{width:100%;border-radius:8px;display:block;margin-bottom:4px}
+.chk{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;color:var(--ink)}
+.chk input{width:auto;margin:0}
+code{color:var(--gold)}
+</style>
+</head>
+<body>
+<header>
+  <img src="{{MARCA}}" alt="Fabíola Rocha">
+  <div><h1>Gerador de Cards</h1><p>Instagram 4x5 (1080×1350) · Fabíola Rocha, corretora de imóveis · Elleva Condomínios</p></div>
+</header>
+<main>
+
+<div class="flow"><h2>Fluxo 1</h2><span>Validar a capa do imóvel</span></div>
+
+<section class="step" id="s1">
+  <div class="sh"><div class="num">1</div><h3>Dados do imóvel</h3><span class="badge">Pendente</span></div>
+  <p class="hint">Responda às perguntas abaixo. Os números aparecem em “02 dormitórios · 01 suíte · 06 vagas · 311 m²”; o que for 0 ou ficar em branco não aparece.</p>
+  <div class="grid">
+    <label>Condomínio / empreendimento (título)<input id="f_nome" placeholder="Ex.: Paragem dos Verdes Campos"></label>
+    <label>Código do imóvel<input id="f_cod" placeholder="Ex.: 18524" inputmode="numeric"></label>
+    <label>Tipo do imóvel (etiqueta)<input id="f_tipo" list="tipos" value="Casa em condomínio"><datalist id="tipos"><option>Casa em condomínio</option><option>Apartamento</option><option>Cobertura</option><option>Terreno em condomínio</option><option>Sobrado em condomínio</option></datalist></label>
+    <label>Metragem (m²)<input id="f_m2" placeholder="Ex.: 311" inputmode="numeric"></label>
+    <label>Dormitórios<input id="f_dorm" placeholder="Ex.: 2" inputmode="numeric"></label>
+    <label>Suítes<input id="f_suite" placeholder="Ex.: 1" inputmode="numeric"></label>
+    <label>Vagas<input id="f_vagas" placeholder="Ex.: 6" inputmode="numeric"></label>
+    <label style="grid-column:1/-1">Destaques da capa (separe com |)<input id="f_dest" placeholder="Ex.: Amplo jardim | Gazebo | Piscina"></label>
+  </div>
+  <div class="row"><button class="primary" id="b1">Confirmar dados</button><button class="ghost" id="bex" title="Preenche tudo com o imóvel 18.524 para testar">Carregar exemplo (18.524)</button><span class="status" id="m1"></span></div>
+</section>
+
+<section class="step locked" id="s2">
+  <div class="sh"><div class="num">2</div><h3>Foto de capa</h3><span class="badge">Pendente</span></div>
+  <p class="hint">Envie <b>apenas 1 imagem</b> (de preferência a fachada, 3:2 ou 4:3; o recorte é automático). Ela vira a capa.</p>
+  <label class="drop"><strong>Clique para escolher a imagem</strong><br>JPG, PNG ou WEBP<input type="file" id="u_cover" accept="image/*" hidden></label>
+  <div class="status" id="m2"></div>
+</section>
+
+<section class="step locked" id="s3">
+  <div class="sh"><div class="num">3</div><h3>Validar a capa</h3><span class="badge">Pendente</span></div>
+  <p class="hint">Escolha o modelo da capa, confira textos e números e valide. Se algo estiver errado, relate o erro.</p>
+  <div class="cover"><canvas class="pv" id="cv_cover" width="1080" height="1350"></canvas>
+    <div>
+      <div class="seg" id="seg3"><button class="on" data-m="A"><b>Capa A</b><small>foto total + faixa dourada</small></button><button data-m="B"><b>Capa B</b><small>onda grande, foto menor</small></button></div>
+      <div class="row"><button class="ok" id="v3">✔ Validar capa</button><button class="warn" id="e3">✎ Relatar erro</button></div>
+      <div class="report" id="r3"><label>Descreva o erro<textarea id="t3" rows="3" placeholder="Ex.: o título está cortado, trocar o destaque..."></textarea></label><div class="row"><button class="primary" id="s_r3">Enviar relato</button></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="flow"><h2>Fluxo 2</h2><span>Montar todos os cards do imóvel</span></div>
+
+<section class="step locked" id="s4">
+  <div class="sh"><div class="num">4</div><h3>Demais fotos e destaques</h3><span class="badge">Pendente</span></div>
+  <p class="hint">Envie as outras fotos do mesmo imóvel. A ordem segue a numeração dos nomes dos arquivos (ajuste com as setas). <b>Escreva o destaque de cada foto</b> (ex.: “Sala ampla | Lareira”): ele precisa combinar com o ambiente.</p>
+  <label class="drop"><strong>Clique para escolher várias imagens</strong><br>Pode enviar de uma vez ou aos poucos: as novas somam às já recebidas<input type="file" id="u_more" accept="image/*" multiple hidden></label>
+  <div class="status" id="m4"></div>
+  <div class="list" id="list4"></div>
+  <div class="row"><button class="primary" id="b4" disabled>Concluir envio das fotos</button></div>
+</section>
+
+<section class="step locked" id="s5">
+  <div class="sh"><div class="num">5</div><h3>Pré-visualização dos cards</h3><span class="badge">Pendente</span></div>
+  <p class="hint">Veja os cards lado a lado (6 por página). Valide ou relate o erro (cite o número do card).</p>
+  <div class="tabs" id="tabs5"></div>
+  <div class="pgrid" id="grid5"></div>
+  <div class="row"><button class="ok" id="v5">✔ Validar cards</button><button class="warn" id="e5">✎ Relatar erro</button></div>
+  <div class="report" id="r5"><label>Descreva o erro<textarea id="t5" rows="3"></textarea></label><div class="row"><button class="primary" id="s_r5">Enviar relato</button></div></div>
+</section>
+
+<section class="step locked" id="s6">
+  <div class="sh"><div class="num">6</div><h3>Download</h3><span class="badge">Pendente</span></div>
+  <p class="hint">PNG 1080×1350 px: <code>Capa-A_CÓDIGO.png</code> e <code>Corpo-NN_CÓDIGO.png</code>.</p>
+  <label class="chk"><input type="checkbox" id="other"> Incluir também a outra capa (A e B)</label>
+  <div class="row" style="margin-top:12px"><button class="primary" id="zip">⬇ Baixar todos os cards (ZIP)</button><span class="status" id="m6"></span></div>
+  <div class="dl" id="dl6"></div>
+</section>
+
+<section class="reports" id="reports" hidden>
+  <h3>Erros relatados</h3><ul id="rlist"></ul>
+  <button class="ghost" id="copyr">Copiar relatos</button>
+</section>
+</main>
+
+<script src="exemplo.js"></script>
+<script>
+const ASSETS={marca:'{{MARCA}}',fab:'{{FAB}}',aura:'{{AURA}}'};
+const $=id=>document.getElementById(id);
+const S={data:null,cover:null,more:[],valid:{},reports:[],canv:[],model:'A',coverName:''};
+const load=src=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src});
+const IMG={};
+const imgsReady=Promise.all(Object.entries(ASSETS).map(async([k,v])=>IMG[k]=await load(v)));
+async function fonts(){await imgsReady;await Promise.all(['italic 500 72px "Cormorant Garamond"','400 30px Montserrat','500 30px Montserrat','600 22px Montserrat'].map(f=>document.fonts.load(f)));await document.fonts.ready}
+
+/* ---------- formatação ---------- */
+const digits=s=>String(s||'').replace(/\D/g,'');
+const thousands=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const n2=v=>{const d=digits(v);return d===''?0:parseInt(d,10)};
+const p2=n=>String(n).padStart(2,'0');
+function hlText(s){return String(s||'').split('|').map(t=>t.trim()).filter(Boolean).join('  |  ')}
+function readData(){
+  const cr=digits($('f_cod').value);
+  return{nome:$('f_nome').value.trim(),codRaw:cr,cod:thousands(cr),tipo:$('f_tipo').value.trim()||'Casa em condomínio',
+    m2:n2($('f_m2').value),dorm:n2($('f_dorm').value),suite:n2($('f_suite').value),vagas:n2($('f_vagas').value),dest:hlText($('f_dest').value)};
+}
+function line4(d){
+  const a=[];
+  if(d.dorm)a.push(p2(d.dorm)+(d.dorm===1?' dormitório':' dormitórios'));
+  if(d.suite)a.push(p2(d.suite)+(d.suite===1?' suíte':' suítes'));
+  if(d.vagas)a.push(p2(d.vagas)+(d.vagas===1?' vaga':' vagas'));
+  if(d.m2)a.push(d.m2+' m²');
+  return a.join('  ·  ');
+}
+
+/* ---------- desenho (canvas) ---------- */
+const GOLD=['#8A6A30','#E0C77C','#8A6A30'];
+function cover(x,img,dx,dy,dw,dh){const s=Math.max(dw/img.width,dh/img.height),w=img.width*s,h=img.height*s;x.save();x.beginPath();x.rect(dx,dy,dw,dh);x.clip();x.drawImage(img,dx+(dw-w)/2,dy+(dh-h)/2,w,h);x.restore()}
+function setLS(x,v){if('letterSpacing' in x)x.letterSpacing=v}
+function goldH(x,x0,x1){const g=x.createLinearGradient(x0,0,x1,0);g.addColorStop(0,GOLD[0]);g.addColorStop(.5,GOLD[1]);g.addColorStop(1,GOLD[2]);return g}
+/* baseline de uma linha CSS que começa em "top" com altura "lh" (null = normal) */
+function baseOf(x,top,lh){const m=x.measureText('Mg'),A=m.fontBoundingBoxAscent,D=m.fontBoundingBoxDescent,L=lh==null?A+D:lh;return top+(L-(A+D))/2+A}
+function lineH(x){const m=x.measureText('Mg');return m.fontBoundingBoxAscent+m.fontBoundingBoxDescent}
+/* texto que encolhe até caber em maxW */
+function fitText(x,txt,fam,start,maxW,ls){let s=start;do{x.font=fam.replace('{s}',s);setLS(x,ls*s+'px');if(x.measureText(txt).width<=maxW)break;s-=2}while(s>22);return s}
+function T(x,txt,left,top,lh,color){x.fillStyle=color;x.textBaseline='alphabetic';x.textAlign='left';x.fillText(txt,left,baseOf(x,top,lh))}
+function shadowLogo(x,img,dx,dy,w){const h=img.height*w/img.width;x.save();x.shadowColor='rgba(0,0,0,.8)';x.shadowBlur=10;x.shadowOffsetY=2;x.drawImage(img,dx,dy,w,h);x.restore();x.save();x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=3;x.drawImage(img,dx,dy,w,h);x.restore()}
+function topShade(x){
+  let g=x.createLinearGradient(0,0,0,440);g.addColorStop(0,'rgba(10,16,2,.8)');g.addColorStop(.45,'rgba(10,16,2,.5)');g.addColorStop(1,'rgba(10,16,2,0)');x.fillStyle=g;x.fillRect(0,0,1080,440);
+  x.save();x.translate(928,149);x.scale(1,.68);g=x.createRadialGradient(0,0,0,0,0,420);g.addColorStop(0,'rgba(10,16,2,.7)');g.addColorStop(1,'rgba(10,16,2,0)');x.fillStyle=g;x.fillRect(-1000,-500,2000,1000);x.restore();
+}
+function fabiola(x,h){const ah=h*593/570,aw=IMG.aura.width/IMG.aura.height*ah,fw=IMG.fab.width/IMG.fab.height*h;x.drawImage(IMG.aura,1080-aw,1350-ah,aw,ah);x.drawImage(IMG.fab,1080-fw,1350-h,fw,h)}
+function codTxt(x,left,bottom,txt){x.font='400 23px Montserrat';setLS(x,'2.76px');const lh=lineH(x);T(x,'Cód. '+txt,left,1350-bottom-lh,null,'#DDE5C8')}
+
+/* Card A: foto total + faixa dourada. opt.capa = com Fabíola e logo no topo */
+function drawA(d,photo,hl,capa){
+  const c=document.createElement('canvas');c.width=1080;c.height=1350;const x=c.getContext('2d');
+  x.fillStyle='#1b1b1e';x.fillRect(0,0,1080,1350);
+  cover(x,photo,0,0,1080,1010);
+  if(capa){topShade(x);shadowLogo(x,IMG.marca,1080-56-230,48,230)}
+  const wave=new Path2D('M0 978 C 260 1010 520 1000 700 960 C 860 925 980 918 1080 926');
+  const body=new Path2D('M0 978 C 260 1010 520 1000 700 960 C 860 925 980 918 1080 926 L1080 1350 L0 1350 Z');
+  let g=x.createLinearGradient(0,1350,0,920);g.addColorStop(0,'#1b1b1e');g.addColorStop(.5,'#1b1b1e');g.addColorStop(1,'#707078');x.fillStyle=g;x.fill(body);
+  x.strokeStyle=goldH(x,0,1080);x.lineWidth=7;x.stroke(wave);
+  /* pílula do tipo */
+  x.font='600 22px Montserrat';setLS(x,'4.4px');
+  const tipo=d.tipo.toUpperCase(),tw=x.measureText(tipo).width,pad=4.4,lh=lineH(x);
+  const pw=32+56+18+pad+tw+18+56+32,ph=lh+24,px=64,py=866;
+  g=x.createLinearGradient(0,py+ph,0,py);g.addColorStop(0,'rgba(27,27,30,.92)');g.addColorStop(.5,'rgba(27,27,30,.92)');g.addColorStop(1,'rgba(112,112,120,.92)');
+  x.fillStyle=g;x.beginPath();x.roundRect(px,py,pw,ph,ph/2);x.fill();
+  const my=py+ph/2;
+  x.fillStyle=goldH(x,px+32,px+88);x.fillRect(px+32,my-1,56,2);
+  T(x,tipo,px+32+56+18+pad,py+12,null,'#fff');
+  const ex=px+32+56+18+pad+tw+18;x.fillStyle=goldH(x,ex,ex+56);x.fillRect(ex,my-1,56,2);
+  /* textos */
+  const maxT=capa?690:888,maxL=capa?700:730,fam="italic 500 {s}px 'Cormorant Garamond'";
+  const ts=fitText(x,d.nome,fam,72,maxT,0);T(x,d.nome,96,1018,ts*1.05,'#fff');
+  const l3=hl;let y=1018+72*1.05+6+16;
+  if(l3){fitText(x,l3,'400 {s}px Montserrat',30,maxL,.03);const h3=lineH(x);T(x,l3,96,y,null,'#fff');y+=h3+16}
+  const l4=line4(d);if(l4){fitText(x,l4,'500 {s}px Montserrat',30,maxL,.06);T(x,l4,96,y,null,'#E8D49A')}
+  setLS(x,'0px');codTxt(x,96,46,d.cod);
+  if(capa)fabiola(x,440);else{const lw=180,lhh=IMG.marca.height*lw/IMG.marca.width;x.drawImage(IMG.marca,1080-64-lw,1350-56-lhh,lw,lhh)}
+  return c;
+}
+/* Card B: onda grande com Fabíola (capa) */
+function drawB(d,photo,hl){
+  const c=document.createElement('canvas');c.width=1080;c.height=1350;const x=c.getContext('2d');
+  x.fillStyle='#fff';x.fillRect(0,0,1080,1350);
+  cover(x,photo,0,0,1080,900);
+  topShade(x);shadowLogo(x,IMG.marca,1080-56-230,48,230);
+  const body=new Path2D('M0 900 C 260 960 520 930 700 810 C 830 725 960 690 1080 700 L1080 1350 L0 1350 Z');
+  let g=x.createLinearGradient(0,1350,0,700);g.addColorStop(0,'#1b1b1e');g.addColorStop(.4,'#1b1b1e');g.addColorStop(1,'#707078');x.fillStyle=g;x.fill(body);
+  x.strokeStyle=goldH(x,0,1080);
+  x.lineWidth=8;x.stroke(new Path2D('M0 878 C 260 940 520 908 700 788 C 830 703 960 668 1080 678'));
+  x.lineWidth=3;x.stroke(new Path2D('M0 890 C 260 950 520 919 700 799 C 830 714 960 679 1080 689'));
+  const L=72;
+  x.font='600 22px Montserrat';setLS(x,'4.4px');const lh=lineH(x);
+  x.fillStyle=goldH(x,L,L+44);x.fillRect(L,1004+lh/2-1,44,2);
+  T(x,d.tipo.toUpperCase(),L+44+16,1004,null,'#fff');
+  const ty=1004+lh+14,maxW=650;
+  const ts=fitText(x,d.nome,"italic 500 {s}px 'Cormorant Garamond'",62,maxW,0);T(x,d.nome,L,ty,ts*1.05,'#fff');
+  let y=ty+62*1.05+14;x.fillStyle=goldH(x,L,L+220);x.fillRect(L,y,220,2);y+=2+14;
+  if(hl){fitText(x,hl,'400 {s}px Montserrat',26,maxW,.03);const h3=lineH(x);T(x,hl,L,y,null,'#fff');y+=h3+14}
+  const l4=line4(d);if(l4){fitText(x,l4,'600 {s}px Montserrat',26,maxW,.06);T(x,l4,L,y,null,'#E8D49A')}
+  setLS(x,'0px');codTxt(x,L,50,d.cod);
+  fabiola(x,570);
+  return c;
+}
+async function render(photo,hl,capa){await fonts();if(capa&&S.model==='B')return drawB(S.data,photo,hl);return drawA(S.data,photo,hl,capa)}
+function show(canvas,target){const t=target.getContext('2d');t.clearRect(0,0,1080,1350);t.drawImage(canvas,0,0)}
+
+/* ---------- imagens ---------- */
+const readImg=f=>new Promise((res,rej)=>{const u=URL.createObjectURL(f);const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=u});
+const natural=(a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'});
+
+/* ---------- etapas / validação ---------- */
+const order=['s1','s2','s3','s4','s5','s6'];
+function setBadge(id,txt){document.querySelector('#'+id+' .badge').textContent=txt}
+function unlock(id){$(id).classList.remove('locked')}
+function mark(id,txt){$(id).classList.add('done');setBadge(id,txt||'Validado ✓')}
+function reset(from){const k=order.indexOf(from);for(let i=k;i<order.length;i++){const id=order[i];$(id).classList.remove('done');if(i>k)$(id).classList.add('locked');setBadge(id,'Pendente');delete S.valid[id]}}
+function relato(step,txt){S.reports.push({step,txt,t:new Date().toLocaleString('pt-BR')});drawReports()}
+function drawReports(){if(!S.reports.length)return;$('reports').hidden=false;$('rlist').innerHTML=S.reports.map(r=>`<li><b>Etapa ${r.step}</b> (${r.t}): ${r.txt.replace(/</g,'&lt;')}</li>`).join('')}
+$('copyr').onclick=()=>navigator.clipboard.writeText(S.reports.map(r=>`Etapa ${r.step} (${r.t}): ${r.txt}`).join('\n'));
+
+/* Etapa 1 */
+$('b1').onclick=()=>{
+  const d=readData(),miss=[];
+  if(!d.nome)miss.push('título');if(!d.codRaw)miss.push('código');if(!d.m2)miss.push('m²');if(!d.dorm)miss.push('dormitórios');if(!d.dest)miss.push('destaques da capa');
+  if(miss.length){$('m1').textContent='Preencha: '+miss.join(', ');return}
+  $('m1').textContent='';S.data=d;reset('s2');mark('s1','Confirmado ✓');unlock('s2');
+  if(S.cover)afterCover();
+};
+$('bex').onclick=async()=>{
+  const E=window.EXEMPLO;if(!E){$('m1').textContent='Arquivo exemplo.js não encontrado (deve ficar na mesma pasta do site).';return}
+  const f=async o=>new File([await (await fetch(o.uri)).blob()],o.name,{type:'image/jpeg'});
+  const d=E.dados;$('f_nome').value=d.nome;$('f_cod').value=d.cod;$('f_tipo').value=d.tipo;$('f_m2').value=d.m2;$('f_dorm').value=d.dorm;$('f_suite').value=d.suite;$('f_vagas').value=d.vagas;$('f_dest').value=d.destaque;
+  $('m1').textContent='Carregando exemplo...';$('b1').click();
+  let dt=new DataTransfer();dt.items.add(await f(E.capa));$('u_cover').files=dt.files;$('u_cover').dispatchEvent(new Event('change'));
+  await new Promise(r=>setTimeout(r,2000));
+  dt=new DataTransfer();for(const o of E.fotos)dt.items.add(await f(o));$('u_more').files=dt.files;$('u_more').dispatchEvent(new Event('change'));
+  await new Promise(r=>setTimeout(r,3000));
+  S.more.forEach(m=>{const o=E.fotos.find(o=>o.name===m.name);if(o)m.hl=o.hl});drawList();
+  $('m1').textContent='Exemplo carregado: valide a etapa 3; as fotos da etapa 4 já estão recebidas, com destaques.';
+  $('s3').scrollIntoView({behavior:'smooth'});
+};
+/* Etapa 2 */
+$('u_cover').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;S.cover=await readImg(f);S.coverName=f.name;
+  $('m2').innerHTML='<b>1 imagem recebida ✓</b> — '+f.name;mark('s2','Recebida ✓');afterCover();
+};
+async function afterCover(){
+  reset('s3');S.valid={};mark('s1','Confirmado ✓');mark('s2','Recebida ✓');unlock('s3');
+  S.canv[0]=await render(S.cover,S.data.dest,true);show(S.canv[0],$('cv_cover'));
+}
+/* Etapa 3 */
+$('seg3').onclick=async e=>{const b=e.target.closest('button');if(!b)return;S.model=b.dataset.m;[...$('seg3').children].forEach(k=>k.classList.toggle('on',k===b));if(S.cover){S.canv[0]=await render(S.cover,S.data.dest,true);show(S.canv[0],$('cv_cover'));if(S.valid.s3)reset('s4')}};
+$('v3').onclick=()=>{S.valid.s3=1;mark('s3');unlock('s4');$('r3').classList.remove('open')};
+$('e3').onclick=()=>$('r3').classList.toggle('open');
+$('s_r3').onclick=()=>{const t=$('t3').value.trim();if(!t)return;relato(3,t);$('t3').value='';$('r3').classList.remove('open');setBadge('s3','Erro relatado')};
+/* Etapa 4 */
+$('u_more').onchange=async e=>{
+  const fs=[...e.target.files].sort((a,b)=>natural(a.name,b.name));e.target.value='';
+  $('m4').textContent='Recebendo '+fs.length+' imagens...';
+  const arr=[],fail=[],dup=[];
+  for(const f of fs){
+    const key=f.name+'|'+f.size;
+    if(S.more.some(m=>m.key===key)||arr.some(m=>m.key===key)){dup.push(f.name);continue}
+    try{arr.push({key,name:f.name,img:await readImg(f),hl:''})}catch(_){fail.push(f.name)}
+  }
+  S.more=S.more.concat(arr).sort((a,b)=>natural(a.name,b.name));S.lastMsg={sel:fs.length,ok:arr.length,fail,dup};
+  drawList();reset('s5');$('s4').classList.remove('done');setBadge('s4','Pendente');
+};
+function drawList(){
+  const n=S.more.length,L=S.lastMsg||{fail:[],dup:[]};
+  let h=n?`<b>${n} imagens recebidas ✓</b> (total de cards: ${n+1}, contando a capa)`:'';
+  if(L.fail.length)h+=`<br><span style="color:var(--err)">⚠ ${L.fail.length} não pôde ser lida: ${L.fail.join(', ')}. Converta para JPG/PNG e envie de novo.</span>`;
+  if(L.dup.length)h+=`<br><span style="color:var(--mut)">${L.dup.length} já estava na lista e foi ignorada: ${L.dup.join(', ')}</span>`;
+  $('m4').innerHTML=h;$('b4').disabled=!n;
+  $('list4').innerHTML=S.more.map((m,i)=>`<div class="it"><span class="n">${p2(i+1)}</span><img src="${m.img.src}"><span class="nm">${m.name}</span><input class="hl" data-i="${i}" placeholder="Destaque: Sala ampla | Lareira" value="${m.hl.replace(/"/g,'&quot;')}"><span class="bt"><button data-a="up" data-i="${i}">↑</button><button data-a="dn" data-i="${i}">↓</button><button data-a="rm" data-i="${i}">✕</button></span></div>`).join('');
+}
+$('list4').oninput=e=>{if(e.target.classList.contains('hl'))S.more[+e.target.dataset.i].hl=e.target.value};
+$('list4').onclick=e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i,a=b.dataset.a;
+  if(a==='up'&&i>0)[S.more[i-1],S.more[i]]=[S.more[i],S.more[i-1]];
+  if(a==='dn'&&i<S.more.length-1)[S.more[i+1],S.more[i]]=[S.more[i],S.more[i+1]];
+  if(a==='rm')S.more.splice(i,1);drawList()};
+$('b4').onclick=async()=>{
+  const sem=S.more.filter(m=>!hlText(m.hl)).length;
+  if(sem&&!confirm(sem+' foto(s) estão sem destaque e sairão sem a linha de destaques. Continuar mesmo assim?'))return;
+  mark('s4',S.more.length+' fotos ✓');reset('s5');unlock('s5');await buildPreview();
+};
+/* Etapa 5 */
+let page=0;
+async function buildPreview(){
+  S.canv=[S.canv[0]];for(const m of S.more)S.canv.push(await render(m.img,hlText(m.hl),false));
+  const pages=Math.ceil(S.canv.length/6);page=0;
+  $('tabs5').innerHTML=Array.from({length:pages},(_,i)=>`<button class="tab ${i?'':'on'}" data-p="${i}">Página ${i+1} de ${pages}</button>`).join('');
+  drawPage();
+}
+$('tabs5').onclick=e=>{const b=e.target.closest('.tab');if(!b)return;page=+b.dataset.p;[...$('tabs5').children].forEach((t,i)=>t.classList.toggle('on',i===page));drawPage()};
+const fname=n=>n===1?`Capa-${S.model}_${S.data.codRaw}.png`:`Corpo-${p2(n-1)}_${S.data.codRaw}.png`;
+function drawPage(){
+  $('grid5').innerHTML='';
+  S.canv.slice(page*6,page*6+6).forEach((c,k)=>{const n=page*6+k+1;const d=document.createElement('div');d.className='pc';d.innerHTML=`<small>${fname(n)}</small>`;const cv=document.createElement('canvas');cv.className='pv';cv.width=1080;cv.height=1350;cv.getContext('2d').drawImage(c,0,0);d.appendChild(cv);$('grid5').appendChild(d)});
+}
+$('v5').onclick=()=>{S.valid.s5=1;mark('s5');unlock('s6');$('r5').classList.remove('open');buildDownload()};
+$('e5').onclick=()=>$('r5').classList.toggle('open');
+$('s_r5').onclick=()=>{const t=$('t5').value.trim();if(!t)return;relato(5,t);$('t5').value='';$('r5').classList.remove('open');setBadge('s5','Erro relatado')};
+/* Etapa 6 */
+const blobOf=c=>new Promise(r=>c.toBlob(r,'image/png'));
+function buildDownload(){
+  $('dl6').innerHTML='';
+  S.canv.forEach((c,i)=>{const a=document.createElement('a');a.download=fname(i+1);a.href=c.toDataURL('image/png');const im=document.createElement('img');im.src=a.href;a.appendChild(im);a.appendChild(document.createTextNode(fname(i+1)));$('dl6').appendChild(a)});
+  $('m6').textContent=S.canv.length+' cards prontos';setBadge('s6','Pronto');
+}
+$('zip').onclick=async()=>{
+  if(!window.JSZip){$('m6').textContent='Biblioteca ZIP não carregou (sem internet?). Use os downloads individuais abaixo.';return}
+  $('m6').textContent='Gerando ZIP...';const z=new JSZip();
+  for(let i=0;i<S.canv.length;i++)z.file(fname(i+1),await blobOf(S.canv[i]));
+  if($('other').checked){const om=S.model==='A'?'B':'A',keep=S.model;S.model=om;const oc=await render(S.cover,S.data.dest,true);z.file(`Capa-${om}_${S.data.codRaw}.png`,await blobOf(oc));S.model=keep}
+  const b=await z.generateAsync({type:'blob'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='Cards_Fabiola_'+S.data.codRaw+'.zip';a.click();$('m6').textContent='Download iniciado ✓';mark('s6','Baixado ✓');
+};
+</script>
+</body>
+</html>
